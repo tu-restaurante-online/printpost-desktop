@@ -70,6 +70,8 @@ printWithDevice(device, fn) → device.open() → printer commands → cut() →
 | `inventario` | `printInventory()` | Lista de stock |
 | `recibo_tienda` | `printStoreReceipt()` | Recibo farmacia/retail |
 
+**Cajón de dinero** (RestaurantesWeb ISSUE-114): se abre solo si la petición lo pide (`open_drawer: true` en el body de `/print`, o `POST /drawer` sin imprimir) **y** `cashDrawer.enabled` está activo. Sin el parámetro no se abre (antes se abría con cada impresión). Adaptadores: `print(cmds, { openDrawer })` y `openDrawer()`.
+
 ---
 
 ## Actualización en curso: v1.2.0 — Multi-conexión

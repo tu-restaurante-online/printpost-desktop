@@ -56,10 +56,22 @@ Verifica la conexión e imprime una página de prueba.
 
 ---
 
+### Abrir el cajón de dinero
+`POST http://localhost:3010/drawer`
+
+Abre el cajón sin imprimir (el sistema lo usa al cobrar en efectivo una venta desde la lista de ventas). Solo abre si `cashDrawer.enabled` está activo en la config; si no, responde `{ success: 1, opened: false }`.
+
+> Desde la v1.5.1 del sistema el cajón **no** se abre con cada impresión: solo cuando la petición lo pide (`open_drawer` en `/print` o `POST /drawer`) **y** está habilitado en la config.
+
+---
+
 ### Imprimir
 `POST http://localhost:3010/print`
 
 El campo `template` del body determina qué se imprime. Los campos marcados como *opcional* pueden omitirse o enviarse vacíos.
+
+#### Campo `open_drawer` (opcional)
+`true` abre el cajón junto con la impresión, si está habilitado en la config (también acepta `?open_drawer=1`). En plantillas que imprimen dos partes (`ticket_comanda`, sin template) se abre una sola vez. Sin el campo, el cajón no se abre.
 
 #### Campo `employee` (opcional)
 Disponible en `recibo`, `comanda` y `recibo_tienda`. Si se envía y no está vacío, imprime `Atendido por: <nombre>` a la izquierda de la fecha/hora al pie del comprobante.

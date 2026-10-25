@@ -19,8 +19,13 @@ class BufferDevice {
     getBuffer() { return Buffer.concat(this._chunks); }
 }
 
+// El cajón se abre solo si lo pide la petición (ISSUE-114: al cobrar en efectivo) y está habilitado en la config
+function shouldOpenDrawer(cashDrawer, options) {
+    return Boolean(options && options.openDrawer && cashDrawer && cashDrawer.enabled);
+}
+
 // Flujo ESC/POS compartido por NetworkAdapter y LibUsbAdapter
-function printEscPos(device, printCommands, cashDrawer) {
+function printEscPos(device, printCommands, cashDrawer, options) {
     return new Promise((resolve, reject) => {
         try {
             const printer = new escpos.Printer(device, { encoding: 'CP850' });
@@ -28,7 +33,7 @@ function printEscPos(device, printCommands, cashDrawer) {
                 if (error) return reject(new Error(`Error al abrir la impresora: ${error.message}`));
                 try {
                     printCommands(printer);
-                    if (cashDrawer && cashDrawer.enabled) {
+                    if (shouldOpenDrawer(cashDrawer, options)) {
                         try {
                             printer.cashdraw(cashDrawer.pin || 2);
                         } catch (drawerErr) {
@@ -54,20 +59,25 @@ class NetworkAdapter {
         this._ip = config.network.ip;
         this._port = config.network.port || 9100;
         this._cashDrawer = config.cashDrawer;
+        this._openDrawer = Boolean(config.openDrawer);
     }
-    print(printCommands) {
+    print(printCommands, options = { openDrawer: this._openDrawer }) {
         console.log(`Conectando a impresora de red en ${this._ip}:${this._port}`);
         const device = new escpos.Network(this._ip, this._port);
-        return printEscPos(device, printCommands, this._cashDrawer);
+        return printEscPos(device, printCommands, this._cashDrawer, options);
+    }
+    openDrawer() {
+        return this.print(() => {}, { openDrawer: true });
     }
 }
 
 class LibUsbAdapter {
     constructor(config) {
         this._cashDrawer = config.cashDrawer;
+        this._openDrawer = Boolean(config.openDrawer);
         this._deviceId = config.usb && config.usb.deviceId ? config.usb.deviceId : null;
     }
-    print(printCommands) {
+    print(printCommands, options = { openDrawer: this._openDrawer }) {
         let device;
         if (this._deviceId) {
             const parts = this._deviceId.split(':');
@@ -79,7 +89,10 @@ class LibUsbAdapter {
             console.log('Conectando a impresora USB LibUSB (primera encontrada)');
             device = new escpos.USB();
         }
-        return printEscPos(device, printCommands, this._cashDrawer);
+        return printEscPos(device, printCommands, this._cashDrawer, options);
+    }
+    openDrawer() {
+        return this.print(() => {}, { openDrawer: true });
     }
 }
 
@@ -87,8 +100,9 @@ class WindowsDriverAdapter {
     constructor(config) {
         this._printerName = config.usb.printerName;
         this._cashDrawer = config.cashDrawer;
+        this._openDrawer = Boolean(config.openDrawer);
     }
-    print(printCommands) {
+    print(printCommands, options = { openDrawer: this._openDrawer }) {
         const self = this;
         return new Promise((resolve, reject) => {
             const bufferDevice = new BufferDevice();
@@ -102,9 +116,12 @@ class WindowsDriverAdapter {
                             if (closeErr) console.warn('BufferDevice close:', closeErr.message);
                             try {
                                 const rawBytes = bufferDevice.getBuffer();
-                                console.log(`Enviando ${rawBytes.length} bytes a "${self._printerName}" (Windows driver)`);
-                                await PosPrinter.sendRawCommand(self._printerName, rawBytes);
-                                if (self._cashDrawer && self._cashDrawer.enabled) {
+                                // Solo abrir cajón (`openDrawer()`): no hay nada que imprimir
+                                if (rawBytes.length > 0) {
+                                    console.log(`Enviando ${rawBytes.length} bytes a "${self._printerName}" (Windows driver)`);
+                                    await PosPrinter.sendRawCommand(self._printerName, rawBytes);
+                                }
+                                if (shouldOpenDrawer(self._cashDrawer, options)) {
                                     await PosPrinter.openCashDrawer(self._printerName, { pin: self._cashDrawer.pin || 2 });
                                 }
                                 resolve();
@@ -120,6 +137,9 @@ class WindowsDriverAdapter {
                 reject(new Error(`Error al inicializar BufferDevice: ${deviceErr.message}`));
             }
         });
+    }
+    openDrawer() {
+        return this.print(() => {}, { openDrawer: true });
     }
 }
 

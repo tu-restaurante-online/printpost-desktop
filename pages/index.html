@@ -164,8 +164,9 @@
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" id="drawer-enabled">
                                 <label class="form-check-label fw-bold" for="drawer-enabled">
-                                    <i class="bi bi-cash-coin me-1"></i>Abrir cajón al imprimir
+                                    <i class="bi bi-cash-coin me-1"></i>Abrir cajón al cobrar en efectivo
                                 </label>
+                                <div class="form-text">El sistema pide abrirlo al cobrar en efectivo o combinado. Las demás impresiones no lo abren.</div>
                             </div>
                             <div id="drawer-pin-section" class="d-none ps-3">
                                 <label class="form-label">Pin del cajón</label>
@@ -178,6 +179,10 @@
                                         <input class="form-check-input" type="radio" name="drawerPin" id="pin-5" value="5">
                                         <label class="form-check-label" for="pin-5">Pin 5</label>
                                     </div>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-light" id="btn-test-drawer">Probar cajón</button>
+                                    <small id="drawer-test-status" class="text-secondary">Guarda la configuración antes de probar.</small>
                                 </div>
                             </div>
                         </div>
@@ -444,6 +449,19 @@
             });
 
             // ===== EVENTOS DE IMPRESIÓN DE PRUEBA =====
+
+            document.getElementById('btn-test-drawer').addEventListener('click', function() {
+                const status = document.getElementById('drawer-test-status');
+                status.textContent = 'Abriendo...';
+                fetch('http://127.0.0.1:3010/drawer', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        status.textContent = data.success
+                            ? (data.opened ? '✔️ Cajón abierto' : '❌ Cajón no habilitado (guarda la configuración)')
+                            : '❌ ' + data.message;
+                    })
+                    .catch(error => { status.textContent = '❌ Error: ' + error.message; });
+            });
 
             document.getElementById('btn-test').addEventListener('click', function() {
                 const resultDiv = document.getElementById('result');

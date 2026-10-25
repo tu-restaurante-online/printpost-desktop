@@ -58,36 +58,41 @@ app.get('/test', async (req, res) => {
 
 app.post('/print', async (req, res) => {
     try {
-        const { template, ...data } = req.body;
-        const printerConfig = req.query;
+        const { template, open_drawer, ...data } = req.body;
+        // Cajón (ISSUE-114): solo si la petición lo pide (el TPV al cobrar en efectivo) y está
+        // habilitado en la config. Sin el parámetro no se abre. Va con la primera impresión de la
+        // plantilla, para no abrirlo dos veces en las que imprimen dos partes.
+        const openDrawer = isTrue(open_drawer) || isTrue(req.query.open_drawer);
+        const printerConfig = { ...req.query, open_drawer: undefined };
+        const firstConfig = { ...printerConfig, open_drawer: openDrawer ? '1' : undefined };
 
-        console.log(`Recibida solicitud para template: ${template ? template : 'no definida'}`);
+        console.log(`Recibida solicitud para template: ${template ? template : 'no definida'}${openDrawer ? ' (abrir cajón)' : ''}`);
 
         switch (template) {
             case 'recibo':
-                await printRecipe(data, printerConfig);
+                await printRecipe(data, firstConfig);
                 break;
             case 'ticket':
-                await printTicket(data, printerConfig);
+                await printTicket(data, firstConfig);
                 break;
             case 'comanda':
-                await printComanda(data, printerConfig);
+                await printComanda(data, firstConfig);
                 break;
             case 'ticket_comanda':
-                await printTicket(data, printerConfig);
+                await printTicket(data, firstConfig);
                 await printComanda(data, printerConfig);
                 break;
             case 'cierre_caja':
-                await printCloseBox(data, printerConfig);
+                await printCloseBox(data, firstConfig);
                 break;
             case 'inventario':
-                await printInventory(data, printerConfig);
+                await printInventory(data, firstConfig);
                 break;
             case 'recibo_tienda':
-                await printStoreReceipt(data, printerConfig);
+                await printStoreReceipt(data, firstConfig);
                 break;
             default:
-                await printRecipe(data, printerConfig);
+                await printRecipe(data, firstConfig);
                 await printComanda(data, printerConfig);
                 break;
         }
@@ -100,12 +105,35 @@ app.post('/print', async (req, res) => {
     }
 });
 
+// Abrir el cajón sin imprimir (ISSUE-114): cobro de una venta desde la lista de ventas.
+// Solo abre si el cajón está habilitado en la config.
+app.post('/drawer', async (req, res) => {
+    try {
+        const config = getRequestConfig(req.query);
+        if (!config.cashDrawer || !config.cashDrawer.enabled) {
+            console.log('Cajón no habilitado en la configuración: no se abre.');
+            return res.status(200).send({ success: 1, opened: false, message: 'Cajón no habilitado' });
+        }
+        await getPrinter(config).openDrawer();
+        console.log('Cajón abierto.');
+        res.status(200).send({ success: 1, opened: true, message: 'Cajón abierto' });
+    } catch (error) {
+        console.error('Error en la ruta /drawer:', error.message);
+        res.status(500).send({ success: 0, message: `Error al abrir el cajón: ${error.message}` });
+    }
+});
+
 // --- Funciones de Utilidad ---
 
+function isTrue(value) {
+    return value === true || value === 1 || value === '1' || value === 'true';
+}
+
 // Compatibilidad hacia atrás: si ?ip=... llega en query params, sobrescribe config
-// de disco solo para esa petición (no persiste).
+// de disco solo para esa petición (no persiste). `open_drawer` = '1' pide abrir el cajón.
 function getRequestConfig(queryParams) {
     const base = typeof global.getAppConfig === 'function' ? global.getAppConfig() : {};
+    const openDrawer = Boolean(queryParams && queryParams.open_drawer === '1');
     if (queryParams && queryParams.ip) {
         return Object.assign({}, base, {
             connectionType: 'network',
@@ -113,9 +141,10 @@ function getRequestConfig(queryParams) {
                 ip: queryParams.ip,
                 port: parseInt(queryParams.port) || 9100,
             },
+            openDrawer,
         });
     }
-    return base;
+    return Object.assign({}, base, { openDrawer });
 }
 
 // --- Lógica de Plantillas de Impresión ---
