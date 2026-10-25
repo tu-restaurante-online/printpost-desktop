@@ -274,7 +274,7 @@ async function printComanda(data, printerConfig) {
 }
 
 async function printCloseBox(data, printerConfig) {
-    const { user, date, opening_amount, income_amount, expenses_amount, closed_amount, missing_amount, surplus_amount, qr_amount, total_sales_amount, products, sales, money } = data;
+    const { user, date, opening_amount, income_amount, expenses_amount, closed_amount, real_amount, missing_amount, surplus_amount, qr_amount, total_sales_amount, products, sales, money } = data;
 
     // Validar que la petición contenga el formato de datos correcto
     if(!user || !date){
@@ -309,9 +309,19 @@ async function printCloseBox(data, printerConfig) {
                 { text: parseFloat(expenses_amount).toFixed(2), align: 'RIGHT', width: 0.5 },
             ])
             .tableCustom([
-                { text: 'Cierre', align: 'LEFT', width: 0.5 },
+                { text: 'Esperado', align: 'LEFT', width: 0.5 },
                 { text: parseFloat(closed_amount).toFixed(2), align: 'RIGHT', width: 0.5 },
-            ])
+            ]);
+
+        // Frontends anteriores a la 1.5.1 no mandan el monto contado
+        if (real_amount !== undefined && real_amount !== null) {
+            printer.tableCustom([
+                { text: 'Real', align: 'LEFT', width: 0.5 },
+                { text: parseFloat(real_amount).toFixed(2), align: 'RIGHT', width: 0.5 },
+            ]);
+        }
+
+        printer
             .tableCustom([
                 { text: 'Faltante', align: 'LEFT', width: 0.5 },
                 { text: parseFloat(missing_amount).toFixed(2), align: 'RIGHT', width: 0.5 },

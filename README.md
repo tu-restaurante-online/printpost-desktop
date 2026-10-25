@@ -194,6 +194,7 @@ Resumen de cierre con arqueo, inventario de productos, ventas por producto y cor
     "income_amount": 1200.00,
     "expenses_amount": 150.00,
     "closed_amount": 1550.00,
+    "real_amount": 1550.00,
     "missing_amount": 0.00,
     "surplus_amount": 0.00,
     "qr_amount": 200.00,
