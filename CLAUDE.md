@@ -17,12 +17,16 @@ App Electron que actúa como **servicio local de impresión térmica**. Corre un
 ## Estructura de archivos
 
 ```
-main.js              — Proceso principal Electron. Crea ventana, tray, inicia server.
-preload.js           — Bridge IPC (actualmente mínimo).
-server.js            — Servidor Express + toda la lógica de impresión ESC/POS.
-pages/index.html     — UI: botones de prueba, panel de configuración (en desarrollo).
+main.js              — Proceso principal Electron. Ventana, tray, server, handlers IPC de config.
+preload.js           — Bridge IPC: window.api (getConfig/setConfig/getPrinters/getUsbDevices).
+server.js            — Servidor Express + templates de impresión ESC/POS.
+printer-adapter.js   — Adapters de conexión (Network, LibUsb, WindowsDriver).
+pages/index.html     — UI: botones de prueba + modal de configuración.
 forge.config.js      — Config de empaquetado con electron-forge.
 assets/              — Iconos e imágenes.
+docs/                — Estado (PROJECT), backlog (ROADMAP), CHANGELOG, daily, sessions/. Ver docs/README.md.
+TODO.md              — Tareas de la sesión activa.
+README.md            — Referencia de la API HTTP para clientes.
 ```
 
 ---
@@ -54,7 +58,7 @@ getDevice(req.query) → escpos.USB() | escpos.Network(ip, port)
 printWithDevice(device, fn) → device.open() → printer commands → cut() → close()
 ```
 
-**Config actual**: solo query params HTTP por petición. **Sin persistencia en disco.**
+**Config**: persistida en disco (`userData/config.json`). Query params `?ip=&port=` la sobrescriben solo para esa petición.
 
 ---
 
@@ -74,18 +78,16 @@ printWithDevice(device, fn) → device.open() → printer commands → cut() →
 
 ---
 
-## Actualización en curso: v1.2.0 — Multi-conexión
+## Versión actual: v1.2.0 — Multi-conexión
 
-Ver `ROADMAP.md` para tareas detalladas.
+Estado en `docs/PROJECT.md`, backlog en `docs/ROADMAP.md`, historial en `docs/CHANGELOG.md`.
 
-### Qué se está haciendo
+Modos de conexión:
+1. **USB + Driver Windows** — `electron-pos-printer`, usa impresoras instaladas en Windows, sin Zadig
+2. **USB + LibUSB** — `escpos-usb`, requiere Zadig/WinUSB
+3. **Red TCP/IP** — `escpos-network`
 
-Refactor para soportar:
-1. **USB + Driver Windows** — `electron-pos-printer` (nuevo), usa impresoras instaladas en Windows, sin Zadig
-2. **USB + LibUSB** — comportamiento actual con `escpos-usb`, requiere Zadig/WinUSB
-3. **Red TCP/IP** — comportamiento actual con `escpos-network`
-
-### Nueva estructura de config (schema v1.2)
+### Estructura de config (schema v1.2)
 
 ```json
 {
@@ -98,19 +100,6 @@ Refactor para soportar:
 ```
 
 Config persiste en disco via IPC. Ruta: `app.getPath('userData')/config.json`.
-
-### Archivos nuevos que se crearán
-
-- `printer-adapter.js` — abstracción de drivers de impresión
-- `config.json` (en userData) — configuración persistente
-
-### Archivos que se modifican
-
-- `main.js` — agregar handlers IPC (`config:get`, `config:set`, `printers:list`)
-- `preload.js` — exponer `window.api` con getConfig/setConfig/getPrinters
-- `server.js` — reemplazar `getDevice()` + `printWithDevice()` con adapter
-- `pages/index.html` — agregar panel de configuración
-- `forge.config.js` — asegurar empaquetado correcto
 
 ### Regla crítica: NO tocar
 
