@@ -16,7 +16,7 @@ module.exports = {
       /^\/TODO\.md$/,
       /^\/docs\//,
       /^\/manuales\//,
-      /^\/tailwind\.config\.js$/,
+      /^\/patches\//,
       /^\/forge\.config\.js$/,
     ],
   },

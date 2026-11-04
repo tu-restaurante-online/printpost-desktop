@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.2.1 — 2026-11-04
+
+### Agregado
+- `cierre_caja`: subtotal por corte de billete y `TOTAL CORTES` al pie de la sección de cortes. `amount` acepta `200`, `"200.00"` o `"Bs. 200"`.
+- `manuales/prompt-consumidor.md`: guía de integración para sistemas que consumen la API (endpoints, campos obligatorios, tipos, cajón).
+
+### Corregido
+- LibUSB: `Advertencia al cerrar impresora: usb.removeAllListeners is not a function` y listener `detach` sin liberar en cada impresión. Los arreglos de `escpos-usb@3.0.0-alpha.4` quedan en `patches/` y se aplican solos con `patch-package` en cada `npm install`.
+
+### Mejorado
+- Eliminado Tailwind sin uso (`assets/css/tailwind.css`, `tailwind.config.js`).
+
 ## v1.2.0 — 2026-11-03
 
 ### Agregado

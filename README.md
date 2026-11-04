@@ -228,6 +228,8 @@ Resumen de cierre con arqueo, inventario de productos, ventas por producto y cor
 
 Opcionales: `products`, `sales`, `money`. Si se omiten, esas secciones no se imprimen.
 
+En `money`, cada corte imprime su subtotal (`amount × quantity`) y al pie `TOTAL CORTES`. `amount` puede ser número (`200`), texto numérico (`"200.00"`) o con prefijo (`"Bs. 200"`).
+
 ---
 
 #### `inventario` — Inventario
@@ -264,10 +266,7 @@ npm run make
 ## Problemas frecuentes
 
 ### Bug en escpos-usb `3.0.0-alpha.4`
-Reemplazar la línea 52 de `node_modules\escpos-usb\index.js`:
-```
-usb.usb.on('detach', function(device){
-```
+Corregido con `patch-package` (`patches/escpos-usb+3.0.0-alpha.4.patch`), que se aplica solo en cada `npm install` (`postinstall`). Corrige `usb.on` → `usb.usb.on` (línea 52) y `usb.removeAllListeners` → `usb.usb.removeAllListeners` (línea 169). Sin la segunda, cada impresión por LibUSB dejaba un listener `detach` sin liberar y mostraba `Advertencia al cerrar impresora: usb.removeAllListeners is not a function`.
 
 ### Driver incompatible (modo LibUSB)
 1. Descarga [Zadig](https://zadig.akeo.ie/).

@@ -1,6 +1,6 @@
 # print-post-electron — estado del proyecto
 
-**Versión:** 1.2.0 · **Fase:** producción (servicio local de impresión térmica para RestaurantesWeb, PanaderiApp y retail)
+**Versión:** 1.2.1 · **Fase:** producción (servicio local de impresión térmica para RestaurantesWeb, PanaderiApp y retail)
 
 ## Stack
 
@@ -17,13 +17,13 @@ Electron 33 · Express 4 (puerto 3010) · escpos 3.0.0-alpha · electron-pos-pri
 | Conexión USB con LibUSB (Zadig) | ✔ |
 | Config persistente (`userData/config.json`) + modal de configuración | ✔ |
 | Cajón de dinero a pedido (`open_drawer` / `POST /drawer`) | ✔ |
-| Build instalador Windows | ✔ build + arranque verificados; falta prueba con impresora real |
+| Build instalador Windows | ✔ |
 
 ## Problemas conocidos
 
-- Bug en `escpos-usb@3.0.0-alpha.4` (ver README → Problemas frecuentes).
+- `escpos-usb@3.0.0-alpha.4` tiene bugs con `usb` v2: corregidos vía `patches/` (patch-package).
 - El modo LibUSB requiere driver WinUSB instalado con Zadig.
 
 ## Próximo objetivo
 
-Instalar `print-pos-1.2.0 Setup.exe` en un equipo con impresora y probar los 3 modos de conexión y el cajón.
+Backlog en `docs/ROADMAP.md`: validar pin del cajón en `config:set`, modo debug de consola.

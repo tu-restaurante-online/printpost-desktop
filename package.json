@@ -1,9 +1,10 @@
 {
   "name": "print-pos",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Servicio  para imprimir en impresora térmica desde petición http.",
   "main": "main.js",
   "scripts": {
+    "postinstall": "patch-package",
     "start": "electron-forge start",
     "test": "echo \"Error: no test specified\" && exit 1",
     "package": "electron-forge package",
@@ -29,7 +30,8 @@
     "@electron-forge/plugin-fuses": "^7.6.0",
     "@electron/fuses": "^1.8.0",
     "electron": "^33.4.11",
-    "electron-reload": "^2.0.0-alpha.1"
+    "electron-reload": "^2.0.0-alpha.1",
+    "patch-package": "^8.0.1"
   },
   "dependencies": {
     "cors": "^2.8.5",

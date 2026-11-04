@@ -125,6 +125,12 @@ app.post('/drawer', async (req, res) => {
 
 // --- Funciones de Utilidad ---
 
+// Número dentro de un monto que puede venir como 200, "200.00" o "Bs. 200"
+function parseAmount(value) {
+    const match = `${value ?? ''}`.replace(',', '.').match(/\d+(\.\d+)?/);
+    return match ? parseFloat(match[0]) : 0;
+}
+
 function isTrue(value) {
     return value === true || value === 1 || value === '1' || value === 'true';
 }
@@ -427,17 +433,29 @@ async function printCloseBox(data, printerConfig) {
                 .text('CORTES DE BILLETES')
                 .align('lt')
                 .tableCustom([
-                    { text: 'Corte', align: 'LEFT', width: 0.75 },
-                    { text: 'Cant.', align: 'RIGHT', width: 0.25 }
+                    { text: 'Corte', align: 'LEFT', width: 0.4 },
+                    { text: 'Cant.', align: 'RIGHT', width: 0.25 },
+                    { text: 'Subtotal', align: 'RIGHT', width: 0.35 }
                 ])
                 .style('NORMAL');
+            // Suma de los cortes al pie: hay cajeros que se guían solo por esta sección
+            let moneyTotal = 0;
             money.forEach(p => {
+                const subtotal = parseAmount(p.amount) * parseAmount(p.quantity);
+                moneyTotal += subtotal;
                 printer.tableCustom([
-                    { text: p.amount, align: 'LEFT', width: 0.75 },
-                    { text: p.quantity, align: 'RIGHT', width: 0.25 },
+                    { text: `${p.amount}`, align: 'LEFT', width: 0.4 },
+                    { text: `${p.quantity}`, align: 'RIGHT', width: 0.25 },
+                    { text: subtotal.toFixed(2), align: 'RIGHT', width: 0.35 },
                 ]);
             });
             printer
+                .style('B')
+                .tableCustom([
+                    { text: 'TOTAL CORTES', align: 'LEFT', width: 0.6 },
+                    { text: moneyTotal.toFixed(2), align: 'RIGHT', width: 0.4 },
+                ])
+                .style('NORMAL')
                 .size(0, 0)
                 .drawLine();
         }

@@ -78,7 +78,7 @@ printWithDevice(device, fn) → device.open() → printer commands → cut() →
 
 ---
 
-## Versión actual: v1.2.0 — Multi-conexión
+## Versión actual: v1.2.1 (base v1.2.0 — Multi-conexión)
 
 Estado en `docs/PROJECT.md`, backlog en `docs/ROADMAP.md`, historial en `docs/CHANGELOG.md`.
 
